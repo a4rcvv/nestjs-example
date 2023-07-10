@@ -1,0 +1,36 @@
+version: '3.8'
+name: nestjs-example-dev
+services:
+  web:
+    build:
+      context: ../
+      dockerfile: ./docker/web/Dockerfile
+      target: dev
+    tty: true
+    volumes:
+      - ../:/app
+      - web-nodemodules:/app/node_modules
+    ports:
+      - 3000:3000
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:15.3-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U "${POSTGRES_USER:-postgres}" || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+volumes:
+  db:
+  web-nodemodules:
